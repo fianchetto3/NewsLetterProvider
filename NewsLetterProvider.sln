@@ -5,7 +5,7 @@ VisualStudioVersion = 17.10.34916.146
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewsLetterProvider", "NewsLetterProvider\NewsLetterProvider.csproj", "{953E1763-C3F8-483B-A160-FE97F17DB622}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{69DA0657-000E-4280-871B-C1B98D093076}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data", "Data\Data.csproj", "{69DA0657-000E-4280-871B-C1B98D093076}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -5,27 +5,43 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace NewsLetterProvider.Functions
+public class Unsubscribe(ILogger<Unsubscribe> logger, DataContext datacontex)
 {
-    public class Unsubscribe(ILogger<Unsubscribe> logger, DataContext datacontex)
-    {
-        private readonly ILogger<Unsubscribe> _logger = logger;
-        private readonly DataContext _dataContex = datacontex;
+    private readonly ILogger<Unsubscribe> _logger = logger;
+    private readonly DataContext _datacontex = datacontex;
 
-        [Function("Unsubscribe")]
-        public async Task <IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "delete", Route ="newsletter/unsubscribe")] HttpRequestData req, string email)
+    [Function("Unsubscribe")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "newsletter/unsubscribe")] HttpRequestData req)
+    {
+        try
         {
-            var subscription = await _dataContex.NewsLetter.FirstOrDefaultAsync(s => s.Email == email);
-            if (subscription != null)
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var subscriptionRequest = JsonSerializer.Deserialize<SubscriptionRequest>(requestBody);
+
+            if (subscriptionRequest == null || string.IsNullOrEmpty(subscriptionRequest.Email))
             {
-                _dataContex.NewsLetter.Remove(subscription);
-                await _dataContex.SaveChangesAsync();
-                return new OkObjectResult("Unsubscribed from newsletter successfully");
+                return new BadRequestObjectResult("Invalid request payload");
             }
 
-            return new NotFoundObjectResult("Subscription not found.");
+            var existingSubscription = await _datacontex.NewsLetter.FirstOrDefaultAsync(s => s.Email == subscriptionRequest.Email);
+            if (existingSubscription == null)
+            {
+                return new NotFoundObjectResult("Email not found");
+            }
 
+            _datacontex.NewsLetter.Remove(existingSubscription);
+            await _datacontex.SaveChangesAsync();
+
+            return new OkObjectResult("Unsubscribed from newsletter successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while unsubscribing from newsletter");
+            return new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
     }
 }
+
